@@ -127,7 +127,7 @@ class TagsCog(commands.Cog, name="Tags"):
         )
     
     @commands.guild_only()
-    @commands.group(name="tag")
+    @commands.group(name="tag", invoke_without_command=True)
     async def tag(self, ctx: Context, *, name: Annotated[str, TagName(lower=True)]):
         query = """
         SELECT tags.content
