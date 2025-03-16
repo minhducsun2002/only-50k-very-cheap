@@ -317,7 +317,7 @@ class TagsCog(commands.Cog, name="Tags"):
         
         args.append(tag_id)
         clause += " AND id = ?"
-        query = query = f"DELETE FROM tags WHERE {clause}"
+        query = query = f"DELETE FROM tags WHERE {clause} RETURNING id"
         async with self.bot.db.execute(query, args) as cursor:
             row = await cursor.fetchone()
 
