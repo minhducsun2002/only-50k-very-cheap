@@ -317,7 +317,7 @@ class TagsCog(commands.Cog, name="Tags"):
         
         args.append(tag_id)
         clause += " AND id = ?"
-        query = query = f"DELETE FROM tags WHERE {clause} RETURNING tag_id"
+        query = query = f"DELETE FROM tags WHERE {clause}"
         async with self.bot.db.execute(query, args) as cursor:
             row = await cursor.fetchone()
 
@@ -331,6 +331,8 @@ class TagsCog(commands.Cog, name="Tags"):
                     content="Tag and corresponding aliases successfully deleted.",
                     mention_author=False,
                 )
+
+        await self.bot.db.commit()
 
     @commands.guild_only()
     @tag.command(name="raw")
