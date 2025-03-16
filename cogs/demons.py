@@ -5,7 +5,6 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 import discord
-from discord.types.snowflake import Snowflake
 import typst
 from aiohttp import web
 from discord.http import Route

@@ -75,7 +75,7 @@ async def startup():
             "[ERROR] Token not found, make sure 'TOKEN' is set in the '.env' file. Exiting."
         )
 
-    async with aiosqlite.connect(BOT_DIR / "data" / "database.sqlite3") as db:
+    async with aiosqlite.connect(BOT_DIR / "data" / "database.sqlite3", autocommit=False) as db:
         bot.db = db
 
         try:
