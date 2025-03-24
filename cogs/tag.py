@@ -61,8 +61,8 @@ class TagList(discord.ui.View):
         end = (self.page + 1) * self.per_page
         description = ""
 
-        for idx, item in enumerate(self.items[begin:end]):
-            description += f"`{begin + idx + 1}` {item}\n"
+        for item in self.items[begin:end]:
+            description += f"{item}\n"
 
         embed = discord.Embed(
             color=discord.Color.yellow(),
@@ -380,7 +380,7 @@ class TagsCog(commands.Cog, name="Tags"):
             args.append(member.id)
 
         query = f"""
-        SELECT name
+        SELECT id, name
         FROM tag_lookup
         WHERE {clause}
         ORDER BY name
@@ -397,7 +397,7 @@ class TagsCog(commands.Cog, name="Tags"):
 
                 return
 
-            tag_names: list[str] = [row[0] for row in rows]
+            tag_names: list[str] = [f"`{row[0]}` {row[1]}" for row in rows]
 
         view = TagList(ctx, tag_names)
         view.message = await ctx.reply(

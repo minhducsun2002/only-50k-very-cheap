@@ -270,7 +270,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
         view = TagList(
             ctx,
-            [f"`{row[0]}` - {row[1]} - <@{row[2]}>\n" for row in rows],
+            [f"`{row[0]}` - {row[1]} - <@{row[2]}>" for row in rows],
         )
         view.message = await ctx.reply(
             embeds=view.format_page(),
