@@ -9,7 +9,7 @@ import typst
 from aiohttp import web
 from discord.http import Route
 from discord.ext import commands, tasks
-from discord.ext.commands import Context
+from discord.ext.commands import Context, is_owner
 from discord.utils import _from_json, escape_markdown
 
 from bot import VeryCheapBot
@@ -120,8 +120,12 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             )
         )
 
+
     @commands.command(name="toggleinvite", aliases=["tinvite"])
-    @commands.has_guild_permissions(manage_messages=True)
+    @commands.check_any(
+        commands.has_guild_permissions(manage_messages=True),
+        commands.is_owner()
+    )
     async def toggleinvite(self, ctx: Context, enabled: bool | None = None):
         if not isinstance(ctx.channel, discord.Thread):
             raise commands.errors.CheckFailure(
@@ -278,12 +282,18 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         )
 
     @queue.command("create")
-    @commands.has_permissions(administrator=True)
-    async def queue_create(self, ctx: Context):
-        await self.queue_loop(cleanup_old_threads=False)
+    @commands.check_any(
+        commands.has_permissions(manage_guild=True),
+        commands.is_owner(),
+    )
+    async def queue_create(self, ctx: Context, id: int | None = None):
+        await self.queue_loop(cleanup_old_threads=False, id=id)
 
     @queue.command("clear")
-    @commands.has_permissions(administrator=True)
+    @commands.check_any(
+        commands.has_permissions(manage_guild=True),
+        commands.is_owner(),
+    )
     async def queue_clear(self, ctx: Context):
         await self.bot.db.execute("DELETE FROM thread_name_queue")
         await self.bot.db.commit()
@@ -291,12 +301,15 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         return await ctx.reply("Cleared queue.", mention_author=False)
 
     @queue.command("nuke")
-    @commands.has_permissions(manage_threads=True)
+    @commands.check_any(
+        commands.has_permissions(manage_threads=True),
+        commands.is_owner(),
+    )
     async def queue_nuke(self, ctx: Context):
         await ctx.channel.delete()
 
     @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
-    async def queue_loop(self, *, cleanup_old_threads: bool = True):
+    async def queue_loop(self, *, cleanup_old_threads: bool = True, id: int | None = None):
         # Clean up old threads
         if cleanup_old_threads:
             async with self.bot.db.execute(
@@ -327,8 +340,15 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         if nsfw_channel is None or not isinstance(nsfw_channel, discord.TextChannel):
             return
 
+        clause = "thread_id IS NULL AND deleted = FALSE"
+        args = []
+
+        if id is not None:
+            clause += " AND id = ?"
+            args.append(id)
+
         async with self.bot.db.execute(
-            "SELECT * FROM thread_name_queue WHERE thread_id IS NULL AND deleted = FALSE"
+            f"SELECT * FROM thread_name_queue WHERE {clause}", args
         ) as cursor:
             row = await cursor.fetchone()
             if row is None:
