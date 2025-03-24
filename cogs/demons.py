@@ -1,6 +1,7 @@
 import asyncio
 import tempfile
 from datetime import UTC, time, datetime, timedelta
+from typing import Annotated, override
 from zoneinfo import ZoneInfo
 from pathlib import Path
 
@@ -9,10 +10,11 @@ import typst
 from aiohttp import web
 from discord.http import Route
 from discord.ext import commands, tasks
-from discord.ext.commands import Context, is_owner
+from discord.ext.commands import Context
 from discord.utils import _from_json, escape_markdown
 
 from bot import VeryCheapBot
+from cogs.tag import TagList
 
 RESOURCE_DIR = Path(__file__).parent.parent / "resources"
 VTUBER_TEMPLATES = {
@@ -73,6 +75,24 @@ async def on_response_prepare(_: web.Request, response: web.StreamResponse):
     response.headers.add("x-content-type-options", "nosniff")
     if response.headers.get("server"):
         del response.headers["server"]
+
+
+class ThreadNameConverter(commands.clean_content):
+    def __init__(self) -> None:
+        super().__init__(
+            fix_channel_mentions=True,
+            use_nicknames=True,
+            remove_markdown=True
+        )
+
+    @override
+    async def convert(self, ctx: Context[VeryCheapBot], argument: str) -> str:
+        argument = await super().convert(ctx, argument)
+
+        if len(argument) > 100:
+            raise commands.BadArgument("Thread name too long.")
+
+        return argument
 
 
 class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
@@ -213,15 +233,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         pass
 
     @queue.command("add")
-    async def queue_add(self, ctx: Context, *, thread_name: str):
-        if len(thread_name) > 100:
-            embed = discord.Embed(
-                color=discord.Color.red(),
-                title="Error",
-                description="Thread names must not exceed 100 characters.",
-            )
-            return await ctx.reply(embed=embed, mention_author=False)
-
+    async def queue_add(self, ctx: Context, *, thread_name: Annotated[str, ThreadNameConverter]):
         await self.bot.db.execute(
             "INSERT INTO thread_name_queue (thread_name, owner_id) VALUES (?, ?)",
             (thread_name, ctx.author.id),
@@ -256,12 +268,15 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
             "SELECT * FROM thread_name_queue WHERE thread_id IS NULL AND deleted = FALSE"
         )
 
-        description = ""
-        for row in rows:
-            description += f"`{row[0]}` - {row[1]} - <@{row[2]}>\n"
-
-        embed = discord.Embed(title="Thread names", description=description)
-        return await ctx.reply(embed=embed, mention_author=False)
+        view = TagList(
+            ctx,
+            [f"`{row[0]}` - {row[1]} - <@{row[2]}>\n" for row in rows],
+        )
+        view.message = await ctx.reply(
+            embeds=view.format_page(),
+            view=view,
+            mention_author=False,
+        )
 
     @queue.command("invited")
     async def queue_invited(self, ctx: Context):
