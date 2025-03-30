@@ -155,7 +155,9 @@ class ThreadPageSource(PageSourceProtocol):
                 )
                 deleted_at = created_at + timedelta(days=1)
 
-                description += f" - <#{thread_id}> (deleted in <t:{int(deleted_at.timestamp())}:R>)"
+                description += (
+                    f" - <#{thread_id}> (deleted <t:{int(deleted_at.timestamp())}:R>)"
+                )
 
             description += "\n"
 
@@ -476,6 +478,14 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
     async def queue_create(self, ctx: Context, id: int | None = None):
         await self._cleanup_old_threads()
         await self._create_new_thread(id=id)
+
+    @queue.command("cleanup")
+    @commands.check_any(
+        commands.has_guild_permissions(manage_guild=True),
+        commands.is_owner(),
+    )
+    async def queue_cleanup(self, ctx: Context):
+        await self._cleanup_old_threads()
 
     @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
     async def queue_loop(self):
