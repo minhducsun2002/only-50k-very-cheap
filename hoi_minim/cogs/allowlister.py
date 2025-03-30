@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, override
 
 import discord
 from discord.ext import commands
-from discord.ext.commands import Context
+from discord.ext.commands import Context, is_owner
 
 if TYPE_CHECKING:
     from hoi_minim.bot import MinimBot
@@ -67,6 +67,57 @@ class AllowlisterCog(commands.Cog, name="Allowlister"):
             result += f"<@&{id}> "
 
         return result.strip()
+
+    @commands.group("allowlist", invoke_without_command=True)
+    async def allowlist(self, ctx: Context):
+        pass
+
+    @commands.check_any(
+        commands.has_guild_permissions(administrator=True),
+        commands.is_owner(),
+    )
+    @allowlist.command("add")
+    async def allowlist_add(
+        self, ctx: Context, user_or_role: discord.User | discord.Role
+    ):
+        if isinstance(user_or_role, discord.User):
+            await self.db.execute(
+                "INSERT INTO society_whitelist (user_id, role_id) VALUES (?, NULL)",
+                (user_or_role.id,),
+            )
+            await ctx.reply(
+                content=f"Added user {user_or_role} to the allowlist.",
+                mention_author=False,
+            )
+        else:
+            await self.db.execute(
+                "INSERT INTO society_whitelist (user_id, role_id) VALUES (NULL, ?)",
+                (user_or_role.id,),
+            )
+            await ctx.reply(
+                content=f"Added role {user_or_role} to the allowlist.",
+                mention_author=False,
+            )
+
+        await self._reload_allowlist()
+
+    @commands.check_any(
+        commands.has_guild_permissions(administrator=True),
+        commands.is_owner(),
+    )
+    @allowlist.command("remove")
+    async def allowlist_remove(
+        self, ctx: Context, user_or_role: discord.User | discord.Role
+    ):
+        await self.db.execute(
+            "DELETE FROM society_whitelist WHERE user_id = ? or role_id = ?",
+            (user_or_role.id, user_or_role.id),
+        )
+        await ctx.reply(
+            f"Removed {user_or_role} from the allowlist.",
+            mention_author=False,
+        )
+        await self._reload_allowlist()
 
 
 async def setup(bot: "MinimBot"):

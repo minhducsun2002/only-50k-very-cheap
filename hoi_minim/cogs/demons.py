@@ -357,7 +357,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
     @queue.command("clear")
     @commands.check_any(
-        commands.has_permissions(manage_threads=True),
+        commands.has_guild_permissions(manage_threads=True),
         commands.is_owner(),
     )
     async def queue_clear(self, ctx: Context):
@@ -367,7 +367,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
     @queue.command("nuke")
     @commands.check_any(
-        commands.has_permissions(manage_threads=True),
+        commands.has_guild_permissions(manage_threads=True),
         commands.is_owner(),
     )
     async def queue_nuke(self, ctx: Context):
@@ -458,7 +458,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
     @queue.command("create")
     @commands.check_any(
-        commands.has_permissions(manage_guild=True),
+        commands.has_guild_permissions(manage_guild=True),
         commands.is_owner(),
     )
     async def queue_create(self, ctx: Context, id: int | None = None):
