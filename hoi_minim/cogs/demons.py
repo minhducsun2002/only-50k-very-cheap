@@ -494,6 +494,45 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         await self._cleanup_old_threads()
         await self._create_new_thread()
 
+    @commands.Cog.listener()
+    async def on_thread_member_join(self, member: discord.ThreadMember):
+        if member.thread.parent_id != settings.nsfw_channel_id:
+            return
+
+        cursor = await self.db.execute(
+            "SELECT id FROM thread_name_queue WHERE thread_id = ?", (member.thread_id,)
+        )
+
+        # some auxiliary threads we handle
+        if cursor.get is None and member.thread_id not in {
+            1311944713355526174,  # food
+            1156264191154475109,  # confessions
+            1202627339515592704,  # archive
+            1173190577257447575,  # code
+            1325871617850609686,  # old demon threads
+            1277673920996180079,
+            1326243164067069955,
+        }:
+            return
+
+        if not self.allowlister.is_allowlisted_id(member.id):
+            # if we can't get the guild object to fetch the member,
+            # just kick it
+            if member.thread.parent is None:
+                await member.thread.remove_user(member)
+                return
+
+            # check if the user has a whitelisted role (primarily bots)
+            guild = member.thread.parent.guild
+            full_member = guild.get_member(member.id)
+
+            if full_member is None:
+                full_member = await guild.fetch_member(member.id)
+
+            if not self.allowlister.is_allowlisted_user(full_member):
+                await member.thread.remove_user(member)
+                return
+
 
 async def setup(bot: "MinimBot"):
     await bot.add_cog(DemonsCog(bot))

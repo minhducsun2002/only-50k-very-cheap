@@ -39,22 +39,22 @@ class AllowlisterCog(commands.Cog, name="Allowlister"):
             elif row[1] is not None:
                 self.allowlisted_users.append(row[1])
 
-    def is_allowlisted(self, id: int):
+    def is_allowlisted_id(self, id: int):
         return id in self.allowlisted_users or id in self.allowlisted_roles
 
-    def is_allowlisted_context(self, ctx: commands.Context["MinimBot"]):
-        return (
-            ctx.author.id == self.bot.owner_id
-            or (
-                isinstance(ctx.author, discord.Member)
-                and (
-                    ctx.author.guild_permissions.administrator
-                    or any(
-                        role.id in self.allowlisted_roles for role in ctx.author.roles
-                    )
-                )
+    def is_allowlisted_user(self, user: discord.User | discord.Member):
+        if isinstance(user, discord.Member):
+            return (
+                user.guild_permissions.administrator
+                or self.is_allowlisted_id(user.id)
+                or any(self.is_allowlisted_id(role.id) for role in user.roles)
             )
-            or ctx.author.id in self.allowlisted_users
+
+        return self.is_allowlisted_id(user.id)
+
+    def is_allowlisted_context(self, ctx: commands.Context["MinimBot"]):
+        return ctx.author.id == self.bot.owner_id or self.is_allowlisted_user(
+            ctx.author
         )
 
     def get_allowlisted_mentions(self):
