@@ -9,6 +9,7 @@ class Settings(BaseSettings):
         "env_prefix": "HOI_MINIM_",
         "env_file": ".env",
         "env_file_encoding": "utf-8",
+        "extra": "ignore",
     }
 
     database_path: Path = Path(__file__).parent.parent / "data" / "database.sqlite3"
