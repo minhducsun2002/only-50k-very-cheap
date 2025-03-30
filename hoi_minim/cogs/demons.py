@@ -486,6 +486,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
     )
     async def queue_cleanup(self, ctx: Context):
         await self._cleanup_old_threads()
+        await ctx.message.add_reaction("✅")
 
     @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
     async def queue_loop(self):
