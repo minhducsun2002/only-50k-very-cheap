@@ -389,7 +389,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
     async def _cleanup_old_threads(self):
         cursor = await self.db.execute(
-            "SELECT id, thread_id, created WHERE thread_id IS NOT NULL and deleted = FALSE"
+            "SELECT id, thread_id, created FROM thread_name_queue WHERE thread_id IS NOT NULL and deleted = FALSE"
         )
         existing_channels = cursor.fetchall()
 
