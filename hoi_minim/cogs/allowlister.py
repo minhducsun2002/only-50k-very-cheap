@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, override
 
 import discord
 from discord.ext import commands
-from discord.ext.commands import Context, is_owner
+from discord.ext.commands import Context
 
 if TYPE_CHECKING:
     from hoi_minim.bot import MinimBot

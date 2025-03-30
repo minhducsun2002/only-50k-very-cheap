@@ -438,7 +438,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         cursor = await self.db.execute(
             f"SELECT id, thread_name FROM thread_name_queue WHERE {clause}", args
         )
-        result = cursor.get
+        result = cursor.fetchone()
 
         if result is None:
             await logger.aerror("ran out of threads")
