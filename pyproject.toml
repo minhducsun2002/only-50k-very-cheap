@@ -1,0 +1,65 @@
+[project]
+name = "hoi-minim"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "apsw>=3.49.1.0",
+    "discord-py>=2.5.2",
+    "pydantic>=2.11.1",
+    "pydantic-settings>=2.8.1",
+    "structlog>=25.2.0",
+    "faust-cchardet>=2.1.19",
+    "brotli>=1.1.0",
+    "uvloop>=0.21.0; sys_platform != 'win32'",
+    "winloop>=0.1.6; sys_platform == 'win32'",
+    "zstandard>=0.23.0",
+    "aiodns>=3.2.0",
+    "typst>=0.13.2",
+]
+
+[dependency-groups]
+dev = ["colorama>=0.4.6; sys_platform == 'win32'", "ruff>=0.11.2"]
+
+[tool.ruff]
+respect-gitignore = true
+
+[tool.ruff.lint]
+select = [
+    "ASYNC",
+    "B",
+    "BLE",
+    "C4",
+    "DTZ",
+    "E",
+    "EM",
+    "F",
+    "FBT",
+    "FLY",
+    "I",
+    "ISC",
+    "Q",
+    "PERF",
+    "PGH",
+    "PIE",
+    "PTH",
+    "RET",
+    "RSE",
+    "RUF",
+    "SIM",
+    "TRY",
+    "TID252",
+    "W",
+]
+ignore = ["E501"]
+unfixable = ["B"]
+
+[tool.ruff.lint.pycodestyle]
+ignore-overlong-task-comments = true
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["id"]
+
+[tool.basedpyright]
+typeCheckingMode = "standard"

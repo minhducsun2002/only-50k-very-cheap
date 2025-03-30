@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSave": true,
+    "ruff.fixAll": true,
+    "python.languageServer": "None",
+    "basedpyright.disableLanguageServices": false,
+    "python.REPL.enableREPLSmartSend": false
+}
