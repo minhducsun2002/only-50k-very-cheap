@@ -111,7 +111,7 @@ class ThreadPageSource(PageSourceProtocol):
         self.per_page: int = per_page
 
     async def get_count(self):
-        query = "SELECT COUNT(id) FROM thread_name_queue WHERE thread_id IS NULL"
+        query = "SELECT COUNT(id) FROM thread_name_queue WHERE deleted = FALSE"
         result = await self.db.execute(query)
         count: int = result.get
 
@@ -132,7 +132,7 @@ class ThreadPageSource(PageSourceProtocol):
 
     @override
     async def get_page(self, page_number: int):
-        query = "SELECT id, thread_name, owner_id FROM thread_name_queue WHERE thread_id IS NULL ORDER BY id LIMIT 10 OFFSET ?"
+        query = "SELECT id, thread_name, owner_id, thread_id, created FROM thread_name_queue WHERE deleted = FALSE ORDER BY id LIMIT 10 OFFSET ?"
         offset = page_number * self.per_page
         result = await self.db.execute(query, (offset,))
 
@@ -140,12 +140,24 @@ class ThreadPageSource(PageSourceProtocol):
 
     @override
     async def format_page(
-        self, menu: "PaginationView", page: list[tuple[int, str, int]]
+        self, menu: "PaginationView", page: list[tuple[int, str, int, int | None, str]]
     ) -> discord.Embed:
         description = ""
 
         for thread in page:
-            description += f"`{thread[0]}` {thread[1]} - <@{thread[2]}>\n"
+            (id, thread_name, owner_id, thread_id, created) = thread
+
+            description += f"`{id}` {thread_name} - <@{owner_id}>"
+
+            if thread_id is not None:
+                created_at = datetime.strptime(created, "%Y-%m-%d %H:%M:%S").replace(
+                    tzinfo=UTC
+                )
+                deleted_at = created_at + timedelta(days=1)
+
+                description += f" - <#{thread_id}> (deleted in <t:{int(deleted_at.timestamp())}:R>)"
+
+            description += "\n"
 
         return discord.Embed(
             color=discord.Color.yellow(),

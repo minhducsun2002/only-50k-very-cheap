@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS thread_name_queue(
     thread_name TEXT NOT NULL,
     owner_id BIGINT NOT NULL,
     thread_id BIGINT DEFAULT NULL,
-    created DATETIME DEFAULT NULL,
+    created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted BOOLEAN DEFAULT FALSE
 );
 
