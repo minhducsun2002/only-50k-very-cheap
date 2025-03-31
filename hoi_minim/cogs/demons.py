@@ -445,7 +445,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
         (id, thread_name) = result
 
-        await logger.ainfo("creating thread", thread_name=thread_name)
+        await logger.ainfo("creating thread", id=id, thread_name=thread_name)
         thread = await nsfw_channel.create_thread(
             name=f"[Hội Nghĩa] {thread_name}",
             type=discord.ChannelType.private_thread,
