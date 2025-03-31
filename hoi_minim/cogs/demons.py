@@ -2,7 +2,7 @@ import asyncio
 import tempfile
 from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, override
+from typing import TYPE_CHECKING, Annotated, cast, override
 from zoneinfo import ZoneInfo
 
 import discord
@@ -14,13 +14,13 @@ from discord.ext.commands import Context
 from discord.http import Route
 from discord.utils import _from_json, escape_markdown
 
+from hoi_minim.lib import async_apsw
 from hoi_minim.lib.pagination import PageSourceProtocol, PaginationView
 from hoi_minim.settings import settings
 
 if TYPE_CHECKING:
     from hoi_minim.bot import MinimBot
     from hoi_minim.cogs.allowlister import AllowlisterCog
-    from hoi_minim.cogs.database import DatabaseCog
 
 RESOURCE_DIR = Path(__file__).parent.parent.parent / "resources"
 VTUBER_TEMPLATES = {
@@ -106,14 +106,14 @@ class ThreadNameConverter(commands.clean_content):
 
 
 class ThreadPageSource(PageSourceProtocol):
-    def __init__(self, db: "DatabaseCog", *, per_page: int):
-        self.db: "DatabaseCog" = db
+    def __init__(self, db: async_apsw.Connection, *, per_page: int):
+        self.db: async_apsw.Connection = db
         self.per_page: int = per_page
 
     async def get_count(self):
         query = "SELECT COUNT(id) FROM thread_name_queue WHERE deleted = FALSE"
         result = await self.db.execute(query)
-        count: int = result.get
+        count: int = await result.get()
 
         return count
 
@@ -136,7 +136,7 @@ class ThreadPageSource(PageSourceProtocol):
         offset = page_number * self.per_page
         result = await self.db.execute(query, (offset,))
 
-        return result.fetchall()
+        return await result.fetchall()
 
     @override
     async def format_page(
@@ -171,7 +171,6 @@ class ThreadPageSource(PageSourceProtocol):
 class DemonsCog(commands.Cog, name="Demons"):
     def __init__(self, bot: "MinimBot") -> None:
         self.bot: "MinimBot" = bot
-        self.db: "DatabaseCog" = self.bot.get_cog("Database")  # pyright: ignore[reportAttributeAccessIssue]
         self.allowlister: "AllowlisterCog" = self.bot.get_cog("Allowlister")  # pyright: ignore[reportAttributeAccessIssue]
 
         self.web_app: web.Application | None = None
@@ -314,7 +313,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
     async def queue_add(
         self, ctx: Context, *, thread_name: Annotated[str, ThreadNameConverter]
     ):
-        await self.db.execute(
+        await self.bot.db.execute(
             "INSERT INTO thread_name_queue (thread_name, owner_id) VALUES (?, ?)",
             (thread_name, ctx.author.id),
         )
@@ -335,10 +334,10 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
             clause = "(thread_name = ? OR id = ?) AND owner_id = ?"
             args = [thread_name_or_id, thread_name_or_id, ctx.author.id]
 
-        cursor = await self.db.execute(
+        cursor = await self.bot.db.execute(
             f"SELECT id FROM thread_name_queue WHERE {clause}", args
         )
-        thread_id = cursor.get
+        thread_id: int | None = await cursor.get()
 
         if thread_id is None:
             await ctx.reply(
@@ -347,14 +346,14 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
             )
             return
 
-        await self.db.execute(
+        await self.bot.db.execute(
             "DELETE FROM thread_name_queue WHERE id = ?", (thread_id,)
         )
         await ctx.reply("Removed from queue.", mention_author=False)
 
     @queue.command("list")
     async def queue_list(self, ctx: Context):
-        source = ThreadPageSource(self.db, per_page=10)
+        source = ThreadPageSource(self.bot.db, per_page=10)
         view = PaginationView(ctx, source)
 
         await view.start()
@@ -375,7 +374,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         commands.is_owner(),
     )
     async def queue_clear(self, ctx: Context):
-        await self.db.execute("DELETE FROM thread_name_queue")
+        await self.bot.db.execute("DELETE FROM thread_name_queue")
 
         await ctx.reply("Cleared queue.", mention_author=False)
 
@@ -388,10 +387,10 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         await ctx.channel.delete()
 
     async def _cleanup_old_threads(self):
-        cursor = await self.db.execute(
+        cursor = await self.bot.db.execute(
             "SELECT id, thread_id, created FROM thread_name_queue WHERE thread_id IS NOT NULL and deleted = FALSE"
         )
-        existing_channels = cursor.fetchall()
+        existing_channels = cast(list[tuple[int, int, str]], await cursor.fetchall())
 
         for channel in existing_channels:
             (id, thread_id, created_at) = channel
@@ -405,7 +404,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
                 if channel is not None:
                     await channel.delete()
 
-                await self.db.execute(
+                await self.bot.db.execute(
                     "UPDATE thread_name_queue SET deleted = TRUE WHERE id = ?", (id,)
                 )
 
@@ -435,10 +434,10 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
             clause += " AND id = ?"
             args = [id]
 
-        cursor = await self.db.execute(
+        cursor = await self.bot.db.execute(
             f"SELECT id, thread_name FROM thread_name_queue WHERE {clause}", args
         )
-        result = cursor.fetchone()
+        result: tuple[int, str] | None = await cursor.fetchone()
 
         if result is None:
             await logger.aerror("ran out of threads")
@@ -465,7 +464,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         )
 
         await logger.info("marking thread as created")
-        await self.db.execute(
+        await self.bot.db.execute(
             "UPDATE thread_name_queue SET thread_id = ?, created = CURRENT_TIMESTAMP WHERE id = ?",
             (thread.id, id),
         )
@@ -500,12 +499,12 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         if member.thread.parent_id != settings.nsfw_channel_id:
             return
 
-        cursor = await self.db.execute(
+        cursor = await self.bot.db.execute(
             "SELECT id FROM thread_name_queue WHERE thread_id = ?", (member.thread_id,)
         )
 
         # some auxiliary threads we handle
-        if cursor.get is None and member.thread_id not in {
+        if await cursor.get() is None and member.thread_id not in {
             1311944713355526174,  # food
             1156264191154475109,  # confessions
             1202627339515592704,  # archive

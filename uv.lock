@@ -82,6 +82,19 @@ wheels = [
 ]
 
 [[package]]
+name = "anyio"
+version = "4.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "idna" },
+    { name = "sniffio" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/95/7d/4c1bd541d4dffa1b52bd83fb8527089e097a106fc90b467a7313b105f840/anyio-4.9.0.tar.gz", hash = "sha256:673c0c244e15788651a4ff38710fea9675823028a6f08a5eda409e0c9840a028", size = 190949 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a1/ee/48ca1a7c89ffec8b6a0c5d02b89c305671d5ffd8d3c94acf8b8c408575bb/anyio-4.9.0-py3-none-any.whl", hash = "sha256:9f76d541cad6e36af7beb62e978876f3b41e3e04f2c1fbf0884604c0a9c4d93c", size = 100916 },
+]
+
+[[package]]
 name = "apsw"
 version = "3.49.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -248,6 +261,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiodns" },
+    { name = "anyio" },
     { name = "apsw" },
     { name = "brotli" },
     { name = "discord-py" },
@@ -256,6 +270,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "structlog" },
     { name = "typst" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
     { name = "uvloop", marker = "sys_platform != 'win32'" },
     { name = "winloop", marker = "sys_platform == 'win32'" },
     { name = "zstandard" },
@@ -270,6 +285,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiodns", specifier = ">=3.2.0" },
+    { name = "anyio", specifier = ">=4.9.0" },
     { name = "apsw", specifier = ">=3.49.1.0" },
     { name = "brotli", specifier = ">=1.1.0" },
     { name = "discord-py", specifier = ">=2.5.2" },
@@ -278,6 +294,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.8.1" },
     { name = "structlog", specifier = ">=25.2.0" },
     { name = "typst", specifier = ">=0.13.2" },
+    { name = "tzdata", marker = "sys_platform == 'win32'", specifier = ">=2025.2" },
     { name = "uvloop", marker = "sys_platform != 'win32'", specifier = ">=0.21.0" },
     { name = "winloop", marker = "sys_platform == 'win32'", specifier = ">=0.1.6" },
     { name = "zstandard", specifier = ">=0.23.0" },
@@ -503,6 +520,15 @@ wheels = [
 ]
 
 [[package]]
+name = "sniffio"
+version = "1.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/87/a6771e1546d97e7e041b6ae58d80074f81b7d5121207425c964ddf5cfdbd/sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc", size = 20372 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/44/75a9c9421471a6c4805dbf2356f7c181a29c1879239abab1ea2cc8f38b40/sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2", size = 10235 },
+]
+
+[[package]]
 name = "structlog"
 version = "25.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -554,6 +580,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/15/9f/9c056dbbff5a57e58a666cf576dd7053086f5826e5552796ad45d23202c5/typst-0.13.2-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:3939b7cc16abc0f753015c886f8173f3a0a289ebc828d886c0f2284415d20490", size = 23443993 },
     { url = "https://files.pythonhosted.org/packages/23/aa/4a774bb4b31ff5865e4aeafe26180c58d76ba6eebd688690b4bc63197bb1/typst-0.13.2-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5c2a78e01b897e3075b6bc01b0bf7738ae110550394d7be1ec51de178ccd5e8c", size = 21712749 },
     { url = "https://files.pythonhosted.org/packages/a6/81/3a2bb633622c81c03b1ab7de0b7dc82ed44f9f0e2d65699f3d0c357a043e/typst-0.13.2-cp38-abi3-win_amd64.whl", hash = "sha256:897829e5ddfad5ace94f3f378ce7c6d580b78402af92e66eed5b28cb98186b57", size = 17446971 },
+]
+
+[[package]]
+name = "tzdata"
+version = "2025.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/95/32/1a225d6164441be760d75c2c42e2780dc0873fe382da3e98a2e1e48361e5/tzdata-2025.2.tar.gz", hash = "sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9", size = 196380 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5c/23/c7abc0ca0a1526a0774eca151daeb8de62ec457e77262b66b359c3c7679e/tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8", size = 347839 },
 ]
 
 [[package]]

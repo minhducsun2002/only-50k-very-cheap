@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, cast, override
 
 import discord
 from discord.ext import commands
@@ -6,13 +6,11 @@ from discord.ext.commands import Context
 
 if TYPE_CHECKING:
     from hoi_minim.bot import MinimBot
-    from hoi_minim.cogs.database import DatabaseCog
 
 
 class AllowlisterCog(commands.Cog, name="Allowlister"):
     def __init__(self, bot: "MinimBot") -> None:
         self.bot: "MinimBot" = bot
-        self.db: "DatabaseCog" = self.bot.get_cog("Database")  # pyright: ignore[reportAttributeAccessIssue]
 
         self.allowlisted_users: list[int] = []
         self.allowlisted_roles: list[int] = []
@@ -28,7 +26,8 @@ class AllowlisterCog(commands.Cog, name="Allowlister"):
 
     async def _reload_allowlist(self):
         query = "SELECT role_id, user_id FROM society_whitelist"
-        result = await self.db.execute(query)
+        cursor = await self.bot.db.execute(query)
+        result = cast(list[tuple[int, int]], await cursor.fetchall())
 
         self.allowlisted_users.clear()
         self.allowlisted_roles.clear()
@@ -81,7 +80,7 @@ class AllowlisterCog(commands.Cog, name="Allowlister"):
         self, ctx: Context, user_or_role: discord.User | discord.Role
     ):
         if isinstance(user_or_role, discord.User):
-            await self.db.execute(
+            await self.bot.db.execute(
                 "INSERT INTO society_whitelist (user_id, role_id) VALUES (?, NULL)",
                 (user_or_role.id,),
             )
@@ -90,7 +89,7 @@ class AllowlisterCog(commands.Cog, name="Allowlister"):
                 mention_author=False,
             )
         else:
-            await self.db.execute(
+            await self.bot.db.execute(
                 "INSERT INTO society_whitelist (user_id, role_id) VALUES (NULL, ?)",
                 (user_or_role.id,),
             )
@@ -109,7 +108,7 @@ class AllowlisterCog(commands.Cog, name="Allowlister"):
     async def allowlist_remove(
         self, ctx: Context, user_or_role: discord.User | discord.Role
     ):
-        await self.db.execute(
+        await self.bot.db.execute(
             "DELETE FROM society_whitelist WHERE user_id = ? or role_id = ?",
             (user_or_role.id, user_or_role.id),
         )

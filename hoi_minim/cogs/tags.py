@@ -1,29 +1,29 @@
 import io
-from typing import TYPE_CHECKING, Annotated, override
+from typing import TYPE_CHECKING, Annotated, cast, override
 
 import apsw
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
+from hoi_minim.lib import async_apsw
 from hoi_minim.lib.pagination import PageSourceProtocol, PaginationView
 
 if TYPE_CHECKING:
     from hoi_minim.bot import MinimBot
     from hoi_minim.cogs.allowlister import AllowlisterCog
-    from hoi_minim.cogs.database import DatabaseCog
 
 
 class TagPageSource(PageSourceProtocol):
-    def __init__(self, db: "DatabaseCog", guild_id: int, *, per_page: int):
-        self.db: "DatabaseCog" = db
+    def __init__(self, db: async_apsw.Connection, guild_id: int, *, per_page: int):
+        self.db: async_apsw.Connection = db
         self.guild_id: int = guild_id
         self.per_page: int = per_page
 
     async def get_count(self):
         query = "SELECT COUNT(id) FROM tags WHERE guild_id = ?"
         result = await self.db.execute(query, (self.guild_id,))
-        count: int = result.get
+        count: int = await result.get()
 
         return count
 
@@ -48,7 +48,7 @@ class TagPageSource(PageSourceProtocol):
         offset = page_number * self.per_page
         result = await self.db.execute(query, (self.guild_id, offset))
 
-        return result.fetchall()
+        return await result.fetchall()
 
     @override
     async def format_page(
@@ -98,7 +98,6 @@ class TagName(commands.clean_content):
 class TagsCog(commands.Cog, name="Tags"):
     def __init__(self, bot: "MinimBot") -> None:
         self.bot: "MinimBot" = bot
-        self.db: "DatabaseCog" = self.bot.get_cog("Database")  # pyright: ignore[reportAttributeAccessIssue]
         self.allowlister: "AllowlisterCog" = self.bot.get_cog("Allowlister")  # pyright: ignore[reportAttributeAccessIssue]
 
     @override
@@ -127,12 +126,13 @@ class TagsCog(commands.Cog, name="Tags"):
             msg = "ctx.guild is None in guild only command"
             raise RuntimeError(msg)
 
-        cursor = await self.db.execute(query, (ctx.guild.id, name))
-        row = cursor.fetchone()
+        cursor = await self.bot.db.execute(query, (ctx.guild.id, name))
+        row: tuple[str] | None = await cursor.fetchone()
 
         if row is None:
-            cursor = await self.db.execute(search_query, (name, ctx.guild.id))
-            options = [row[0] for row in cursor]
+            cursor = await self.bot.db.execute(search_query, (name, ctx.guild.id))
+            rows = cast(tuple[str], await cursor.fetchall())
+            options = [row[0] for row in rows]
 
             content = "Tag not found."
 
@@ -170,9 +170,9 @@ class TagsCog(commands.Cog, name="Tags"):
             msg = "ctx.guild is None in guild only command"
             raise RuntimeError(msg)
 
-        with self.db.connection:
+        async with self.bot.db:
             try:
-                cursor = await self.db.execute(
+                cursor = await self.bot.db.execute(
                     tag_create_query, (name, content, ctx.author.id, ctx.guild.id)
                 )
             except apsw.ConstraintError:
@@ -184,7 +184,7 @@ class TagsCog(commands.Cog, name="Tags"):
                 await ctx.reply(content="Could not create tag.", mention_author=False)
                 raise
 
-            tag_id_row = cursor.fetchone()
+            tag_id_row: tuple[int] | None = await cursor.fetchone()
 
             if tag_id_row is None:
                 await ctx.reply(content="Could not create tag.", mention_author=False)
@@ -195,7 +195,7 @@ class TagsCog(commands.Cog, name="Tags"):
             tag_id = tag_id_row[0]
 
             try:
-                cursor = await self.db.execute(
+                cursor = await self.bot.db.execute(
                     tag_lookup_create_query, (name, tag_id, ctx.author.id, ctx.guild.id)
                 )
             except apsw.ConstraintError:
@@ -233,8 +233,10 @@ class TagsCog(commands.Cog, name="Tags"):
             msg = "ctx.guild is None in guild only command"
             raise RuntimeError(msg)
 
-        cursor = await self.db.execute(query_select, (ctx.guild.id, old_name.lower()))
-        row = cursor.fetchone()
+        cursor = await self.bot.db.execute(
+            query_select, (ctx.guild.id, old_name.lower())
+        )
+        row: tuple[int, int] | None = await cursor.fetchone()
 
         if row is None:
             await ctx.reply(
@@ -245,9 +247,9 @@ class TagsCog(commands.Cog, name="Tags"):
 
         tag_id, guild_id = row
 
-        with self.db.connection:
+        async with self.bot.db:
             try:
-                await self.db.execute(
+                await self.bot.db.execute(
                     query_insert, (new_name, tag_id, ctx.author.id, guild_id)
                 )
                 await ctx.reply(
@@ -287,10 +289,10 @@ class TagsCog(commands.Cog, name="Tags"):
             msg = "ctx.guild is None in guild only command"
             raise RuntimeError(msg)
 
-        cursor = await self.db.execute(
+        cursor = await self.bot.db.execute(
             query_select, (name, ctx.author.id, ctx.guild.id)
         )
-        row = cursor.fetchone()
+        row: tuple[int] | None = await cursor.fetchone()
 
         if row is None:
             await ctx.reply(
@@ -301,7 +303,7 @@ class TagsCog(commands.Cog, name="Tags"):
 
         tag_id = row[0]
 
-        await self.db.execute(query_update, (content, tag_id))
+        await self.bot.db.execute(query_update, (content, tag_id))
         await ctx.reply(content="Successfully edited tag.", mention_author=False)
 
     @commands.guild_only()
@@ -329,8 +331,8 @@ class TagsCog(commands.Cog, name="Tags"):
             clause += " AND owner_id = ?"
 
         query = f"DELETE FROM tag_lookup WHERE {clause} RETURNING tag_id"
-        cursor = await self.db.execute(query, args)
-        row = cursor.fetchone()
+        cursor = await self.bot.db.execute(query, args)
+        row: tuple[int] | None = await cursor.fetchone()
 
         if row is None:
             await ctx.reply(
@@ -344,8 +346,8 @@ class TagsCog(commands.Cog, name="Tags"):
         args.append(tag_id)
         clause += " AND id = ?"
         query = query = f"DELETE FROM tags WHERE {clause} RETURNING id"
-        cursor = await self.db.execute(query, args)
-        row = cursor.fetchone()
+        cursor = await self.bot.db.execute(query, args)
+        row = await cursor.fetchone()
 
         if row is None:
             await ctx.reply(
@@ -377,8 +379,8 @@ class TagsCog(commands.Cog, name="Tags"):
             msg = "ctx.guild is None in guild only command"
             raise RuntimeError(msg)
 
-        cursor = await self.db.execute(query, (ctx.guild.id, name))
-        row = cursor.fetchone()
+        cursor = await self.bot.db.execute(query, (ctx.guild.id, name))
+        row: tuple[str] | None = await cursor.fetchone()
 
         if row is None:
             await ctx.reply(content="Tag not found.", mention_author=False)
@@ -404,7 +406,9 @@ class TagsCog(commands.Cog, name="Tags"):
             msg = "ctx.guild is None in guild only command"
             raise RuntimeError(msg)
 
-        view = PaginationView(ctx, TagPageSource(self.db, ctx.guild.id, per_page=10))
+        view = PaginationView(
+            ctx, TagPageSource(self.bot.db, ctx.guild.id, per_page=10)
+        )
         await view.start()
 
 

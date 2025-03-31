@@ -12,12 +12,12 @@ from discord.ext import commands
 from discord.ext.commands import Bot, ExtensionError
 from discord.utils import MISSING  # pyright: ignore[reportAny]
 
+from .lib import async_apsw
 from .migrator import Migrator
 from .settings import settings
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 EXTENSIONS = (
-    "hoi_minim.cogs.database",
     "hoi_minim.cogs.allowlister",
     "hoi_minim.cogs.demons",
     "hoi_minim.cogs.tags",
@@ -46,7 +46,7 @@ class MinimBot(Bot):
 
         super().__init__(command_prefix=command_prefix, intents=intents)
 
-        self.connection: apsw.Connection = MISSING
+        self.db: async_apsw.Connection = MISSING
         self.bot_app_info: discord.AppInfo = MISSING
 
     @override
@@ -64,19 +64,21 @@ class MinimBot(Bot):
 
         settings.database_path.parent.mkdir(parents=True, exist_ok=True)
 
-        self.connection = apsw.Connection(str(settings.database_path))
+        self.db = await async_apsw.connect(settings.database_path)
 
         apsw.fts5.register_functions(  # pyright: ignore[reportUnknownMemberType]
-            self.connection,
+            self.db.connection,
             apsw.fts5.map_functions,  # pyright: ignore[reportArgumentType]
         )
         apsw.fts5.register_tokenizers(  # pyright: ignore[reportUnknownMemberType]
-            self.connection,
+            self.db.connection,
             apsw.fts5.map_tokenizers,  # pyright: ignore[reportArgumentType]
         )
 
         migrator = Migrator()
-        await self.loop.run_in_executor(None, lambda: migrator.upgrade(self.connection))
+        await self.loop.run_in_executor(
+            None, lambda: migrator.upgrade(self.db.connection)
+        )
 
         for extension in EXTENSIONS:
             try:
@@ -90,5 +92,5 @@ class MinimBot(Bot):
 
     @override
     async def close(self) -> None:
-        self.connection.close()
+        await self.db.close()
         return await super().close()
