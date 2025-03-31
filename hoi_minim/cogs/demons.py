@@ -464,10 +464,12 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         )
 
         await logger.info("marking thread as created")
-        await self.bot.db.execute(
-            "UPDATE thread_name_queue SET thread_id = ?, created = CURRENT_TIMESTAMP WHERE id = ?",
-            (thread.id, id),
-        )
+
+        async with self.bot.db:
+            await self.bot.db.execute(
+                "UPDATE thread_name_queue SET thread_id = ?, created = CURRENT_TIMESTAMP WHERE id = ?",
+                (thread.id, id),
+            )
 
     @queue.command("create")
     @commands.check_any(
