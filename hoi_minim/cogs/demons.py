@@ -153,7 +153,7 @@ class ThreadPageSource(PageSourceProtocol):
                 created_at = datetime.strptime(created, "%Y-%m-%d %H:%M:%S").replace(
                     tzinfo=UTC
                 )
-                deleted_at = created_at + timedelta(days=1)
+                deleted_at = created_at + timedelta(days=2)
 
                 description += (
                     f" - <#{thread_id}> (deleted <t:{int(deleted_at.timestamp())}:R>)"
@@ -398,7 +398,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
                 tzinfo=UTC
             )
 
-            if datetime.now(UTC) - created_at >= timedelta(days=1):
+            if datetime.now(UTC) - created_at >= timedelta(days=2):
                 channel = self.bot.get_channel(thread_id)
 
                 if channel is not None:
@@ -465,11 +465,14 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
         await logger.ainfo("marking thread as created")
 
-        async with self.bot.db:
-            await self.bot.db.execute(
-                "UPDATE thread_name_queue SET thread_id = ?, created = CURRENT_TIMESTAMP WHERE id = ?",
-                (thread.id, id),
-            )
+        await self.bot.db.execute(
+            """UPDATE thread_name_queue
+            SET thread_id = ?,
+                created = datetime(unixepoch(CURRENT_TIMESTAMP) / 3600 * 3600, 'unixepoch')
+            WHERE id = ?
+            """,
+            (thread.id, id),
+        )
 
     @queue.command("create")
     @commands.check_any(
