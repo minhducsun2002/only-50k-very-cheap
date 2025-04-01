@@ -463,7 +463,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
             json={"invitable": False},
         )
 
-        await logger.info("marking thread as created")
+        await logger.ainfo("marking thread as created")
 
         async with self.bot.db:
             await self.bot.db.execute(
