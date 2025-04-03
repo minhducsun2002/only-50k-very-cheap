@@ -48,7 +48,7 @@ PBVM_WORDS = [
     "trung ki",
     "trung kỳ",
     "trung ky",
-    "36",
+    "36 ",
     "ba sáu",
     "ba sau",
     ":qn:",
