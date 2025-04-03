@@ -48,7 +48,7 @@ PBVM_WORDS = [
     "trung ki",
     "trung kỳ",
     "trung ky",
-    "36 ",
+    " 36",
     "ba sáu",
     "ba sau",
     ":qn:",
@@ -170,7 +170,7 @@ class ThreadPageSource(PageSourceProtocol):
 
     @override
     async def get_page(self, page_number: int):
-        query = "SELECT id, thread_name, owner_id, thread_id, created FROM thread_name_queue WHERE deleted = FALSE ORDER BY id LIMIT 10 OFFSET ?"
+        query = f"SELECT id, thread_name, owner_id, thread_id, created FROM thread_name_queue WHERE deleted = FALSE ORDER BY id LIMIT {self.per_page} OFFSET ?"
         offset = page_number * self.per_page
         result = await self.db.execute(query, (offset,))
 
@@ -391,7 +391,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
     @queue.command("list")
     async def queue_list(self, ctx: Context):
-        source = ThreadPageSource(self.bot.db, per_page=10)
+        source = ThreadPageSource(self.bot.db, per_page=20)
         view = PaginationView(ctx, source)
 
         await view.start()
