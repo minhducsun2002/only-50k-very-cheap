@@ -665,7 +665,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         new_fine = count * 7_500_000
 
         await message.reply(
-            content=f"De nghi anh nop phat VND {total_fine:,} (+VND {new_fine:,})",
+            content=f"De nghi anh/chi nop phat VND {total_fine:,} (+VND {new_fine:,})",
             mention_author=False,
         )
 
