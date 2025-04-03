@@ -1,4 +1,5 @@
 import asyncio
+import string
 import tempfile
 from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
@@ -27,6 +28,39 @@ VTUBER_TEMPLATES = {
     "termination": RESOURCE_DIR / "termination.typ",
     "graduation": RESOURCE_DIR / "graduation.typ",
 }
+PBVM_WORDS = [
+    "bắc kì",
+    "bac ki",
+    "bắc kỳ",
+    "bac ky",
+    "parky",
+    "3kg",
+    "nam kì",
+    "nam ki",
+    "nam kỳ",
+    "nam ki",
+    "namkiki",
+    "5kg",
+    "trung kì",
+    "trung ki",
+    "trung kỳ",
+    "trung ky",
+    "36",
+    "ba sáu",
+    "ba sau",
+    "hai ngón",
+    "hai ngon",
+    "rau má",
+    "rau ma",
+    "ọc ọc",
+    "oc oc",
+    "phá đường tàu",
+    "pha duong tau",
+    "cá rô phi",
+    "ca ro phi",
+    "rau muống",
+    "rau muong",
+]
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 router = web.RouteTableDef()
@@ -492,6 +526,31 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         await self._cleanup_old_threads()
         await ctx.message.add_reaction("✅")
 
+    @commands.command("pbvmcount")
+    async def pbvmcount(self, ctx: Context, user: discord.User = commands.Author):
+        query = "SELECT guild_id, count FROM pbvm_counter WHERE user_id = ?"
+        cursor = await self.bot.db.execute(query, (user.id,))
+        rows: dict[int, int] = dict(await cursor.fetchall())
+        total_count = sum(c for c in rows.values())
+
+        message = f"{user} đã phân biệt vùng miền tổng cộng {total_count:,} lần"
+
+        if ctx.guild is not None:
+            count_in_guild = rows.get(ctx.guild.id, 0)
+
+            if count_in_guild > 0:
+                message += f" ({count_in_guild:,} lần trong server này)"
+
+        if total_count > 0:
+            total_fine = total_count * 7_500_000
+            message += f", và sẽ phải đóng phạt VND {total_fine:,}."
+
+        await ctx.reply(
+            content=message,
+            mention_author=False,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+
     @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
     async def queue_loop(self):
         await logger.ainfo("executing queue creation task")
@@ -537,6 +596,73 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
             if not self.allowlister.is_allowlisted_user(full_member):
                 await member.thread.remove_user(member)
                 return
+
+    def _count_pbvm(self, wordlist: list[str], content: str):
+        content = content.lower().strip()
+
+        return sum([content.count(word) for word in wordlist])
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if not self.allowlister.is_allowlisted_id(message.author.id):
+            return
+
+        if message.author.bot:
+            return
+
+        if message.webhook_id:
+            return
+
+        if not message.guild:
+            return
+
+        count = self._count_pbvm(PBVM_WORDS, message.content)
+
+        # ignore spammy
+        if count >= 50 or count == 0:
+            return
+
+        query = """INSERT INTO pbvm_counter(guild_id, user_id, count)
+        VALUES (?, ?, ?)
+        ON CONFLICT (guild_id, user_id) DO UPDATE SET count = count + ?
+        """
+
+        await self.bot.db.execute(
+            query,
+            (message.guild.id, message.author.id, count, count),
+        )
+
+        logger.debug("updated pbvm count", added_count=count)
+
+        cursor = await self.bot.db.execute(
+            "SELECT id FROM thread_name_queue WHERE thread_id = ?",
+            (message.channel.id,),
+        )
+
+        if await cursor.get() is None and message.channel.id not in {
+            1311944713355526174,  # food
+            1156264191154475109,  # confessions
+            1202627339515592704,  # archive
+            1173190577257447575,  # code
+            1325871617850609686,  # old demon threads
+            1277673920996180079,
+            1326243164067069955,
+        }:
+            return
+
+        query = "SELECT SUM(count) FROM pbvm_counter WHERE user_id = ?"
+        cursor = await self.bot.db.execute(query, (message.author.id,))
+        total_count = await cursor.get()
+
+        logger.debug("notifying user of fine")
+
+        total_fine = total_count * 7_500_000
+        new_fine = count * 7_500_000
+
+        await message.reply(
+            content=f"De nghi anh nop phat VND {total_fine:,} (+VND {new_fine:,})",
+            mention_author=False,
+        )
 
 
 async def setup(bot: "MinimBot"):
