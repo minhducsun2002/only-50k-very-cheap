@@ -1,5 +1,5 @@
 import asyncio
-import string
+import re
 import tempfile
 from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
@@ -28,6 +28,9 @@ VTUBER_TEMPLATES = {
     "termination": RESOURCE_DIR / "termination.typ",
     "graduation": RESOURCE_DIR / "graduation.typ",
 }
+CUSTOM_EMOJI_RE = re.compile(
+    r"<?(?:(?P<animated>a)?:)?(?P<name>[A-Za-z0-9\_]+):(?P<id>[0-9]{13,20})>?"
+)
 PBVM_WORDS = [
     "bắc kì",
     "bac ki",
@@ -599,6 +602,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
     def _count_pbvm(self, wordlist: list[str], content: str):
         content = content.lower().strip()
+        content = CUSTOM_EMOJI_RE.sub(lambda m: ":" + m.group("name") + ":", content)
 
         return sum([content.count(word) for word in wordlist])
 
