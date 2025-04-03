@@ -51,6 +51,7 @@ PBVM_WORDS = [
     "36",
     "ba sáu",
     "ba sau",
+    ":qn:",
     "hai ngón",
     "hai ngon",
     "rau má",
