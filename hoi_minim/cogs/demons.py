@@ -38,7 +38,7 @@ PBVM_WORDS = [
     "nam kì",
     "nam ki",
     "nam kỳ",
-    "nam ki",
+    "nam ky",
     "namkiki",
     "5kg",
     "trung kì",
