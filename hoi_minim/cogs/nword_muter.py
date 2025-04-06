@@ -20,8 +20,6 @@ WORDLIST = {
     "n/gger",
     "niga",
     "niger",
-    "nigga",
-    "nigger",
     "nіgga",  # noqa: RUF001
     "nіggеr",  # noqa: RUF001
     "ngga",
