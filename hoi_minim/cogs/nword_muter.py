@@ -27,6 +27,8 @@ WORDLIST = {
     "n199er",
     "n199a",
     "n/gget",
+    "Ꞃい𝔾𝔾えR",  # noqa: RUF001
+    "nıgus",  # noqa: RUF001
 }
 
 
