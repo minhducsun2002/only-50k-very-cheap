@@ -117,12 +117,20 @@ class NwordMuter(commands.Cog):
         try:
             dm_channel = author.dm_channel or await author.create_dm()
 
-            await dm_channel.send(
-                content=(
-                    "Bạn đã bị mute do n-word bypass và do xui. Bạn có 12% khả năng bị mute mỗi lần bypass filter.\n"
-                    "You have been muted for bypassing the n-word filter, and for being unlucky. There's only a 12% chance you get muted for doing so."
+            if pity >= 7:
+                await dm_channel.send(
+                    content=(
+                        "Bạn đã bị mute do n-word bypass và do đạt ngưỡng pity. Bạn có tối đa 7 lượt bypass filter trước khi bị mute.\n"
+                        "You have been muted for bypassing the n-word filter, and reaching pity. You can bypass the filter 7 times at max before getting muted."
+                    )
                 )
-            )
+            else:
+                await dm_channel.send(
+                    content=(
+                        "Bạn đã bị mute do n-word bypass và do xui. Bạn có 12% khả năng bị mute mỗi lần bypass filter.\n"
+                        "You have been muted for bypassing the n-word filter, and for being unlucky. There's only a 12% chance you get muted for doing so."
+                    )
+                )
         except (discord.errors.Forbidden, discord.errors.HTTPException) as e:
             logger.exception("cannot notify mute", exc_info=e)
 
