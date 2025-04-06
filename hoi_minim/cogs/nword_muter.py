@@ -40,6 +40,8 @@ WORDLIST = {
     "nger",
     "nagger",
     "nige",
+    "ligger",
+    "ligga",
 }
 
 
