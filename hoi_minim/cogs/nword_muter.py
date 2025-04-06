@@ -66,8 +66,12 @@ class NwordMuter(commands.Cog):
             user_id=author.id,
         )
         getting_muted = self.random.random() < 0.1
+        can_be_muted = author.top_role < message.guild.me.top_role
 
         if not getting_muted:
+            return
+
+        if not can_be_muted:
             return
 
         logger.debug("user hit SSRacism", user_id=author.id)
