@@ -65,7 +65,7 @@ class NwordMuter(commands.Cog):
             message_id=message.id,
             user_id=author.id,
         )
-        getting_muted = self.random.random() < 0.2
+        getting_muted = self.random.random() < 0.1
 
         if not getting_muted:
             return
