@@ -65,7 +65,7 @@ class NwordMuter(commands.Cog):
             message_id=message.id,
             user_id=author.id,
         )
-        getting_muted = self.random.random() < 0.1
+        getting_muted = self.random.random() < 0.15
         can_be_muted = author.top_role < message.guild.me.top_role
 
         if not getting_muted:
