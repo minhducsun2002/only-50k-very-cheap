@@ -72,10 +72,10 @@ class NwordMuter(commands.Cog):
 
         logger.debug("user hit SSRacism", user_id=author.id)
 
-        with contextlib.suppress(
-            discord.errors.Forbidden, discord.errors.HTTPException
-        ):
+        try:
             await author.timeout(timedelta(hours=1), reason="sorako")
+        except (discord.errors.Forbidden, discord.errors.HTTPException) as e:
+            logger.exception("could not time out racism", exc_info=e)
 
 
 async def setup(bot: "MinimBot"):
