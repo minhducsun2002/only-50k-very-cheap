@@ -14,11 +14,21 @@ class AllowlisterCog(commands.Cog, name="Allowlister"):
 
         self.allowlisted_users: list[int] = []
         self.allowlisted_roles: list[int] = []
+        self.thread_ids: list[int] = [
+            1311944713355526174,  # food
+            1156264191154475109,  # confessions
+            1202627339515592704,  # archive
+            1173190577257447575,  # code
+            1325871617850609686,  # old demon threads
+            1277673920996180079,
+            1326243164067069955,
+        ]
 
     @override
     async def cog_load(self) -> None:
         self.db = self.bot.get_cog("Database")  # pyright: ignore[reportAttributeAccessIssue]
         await self._reload_allowlist()
+        await self._reload_thread_list()
 
     @override
     def cog_check(self, ctx: Context["MinimBot"]) -> bool:
@@ -37,6 +47,24 @@ class AllowlisterCog(commands.Cog, name="Allowlister"):
                 self.allowlisted_roles.append(row[0])
             elif row[1] is not None:
                 self.allowlisted_users.append(row[1])
+
+    async def _reload_thread_list(self):
+        self.thread_ids = [
+            1311944713355526174,  # food
+            1156264191154475109,  # confessions
+            1202627339515592704,  # archive
+            1173190577257447575,  # code
+            1325871617850609686,  # old demon threads
+            1277673920996180079,
+            1326243164067069955,
+        ]
+
+        cursor = await self.bot.db.execute(
+            "SELECT thread_id FROM thread_name_queue WHERE thread_id IS NOT NULL AND deleted = FALSE"
+        )
+        thread_ids: list[int] = await cursor.get()
+
+        self.thread_ids.extend(thread_ids)
 
     def is_allowlisted_id(self, id: int):
         return id in self.allowlisted_users or id in self.allowlisted_roles

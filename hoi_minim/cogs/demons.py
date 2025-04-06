@@ -423,6 +423,11 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
     )
     async def queue_nuke(self, ctx: Context):
         await ctx.channel.delete()
+        await self.bot.db.execute(
+            "UPDATE thread_name_queue SET deleted = TRUE WHERE thread_id = ?",
+            (ctx.channel.id,),
+        )
+        await self.allowlister._reload_thread_list()
 
     async def _cleanup_old_threads(self):
         cursor = await self.bot.db.execute(
@@ -445,6 +450,8 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
                 await self.bot.db.execute(
                     "UPDATE thread_name_queue SET deleted = TRUE WHERE id = ?", (id,)
                 )
+
+        await self.allowlister._reload_thread_list()
 
     async def _create_new_thread(self, id: int | None = None):
         nsfw_channel = self.bot.get_channel(settings.nsfw_channel_id)
@@ -511,6 +518,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
             """,
             (thread.id, id),
         )
+        await self.allowlister._reload_thread_list()
 
     @queue.command("create")
     @commands.check_any(
@@ -567,20 +575,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         if member.thread.parent_id != settings.nsfw_channel_id:
             return
 
-        cursor = await self.bot.db.execute(
-            "SELECT id FROM thread_name_queue WHERE thread_id = ?", (member.thread_id,)
-        )
-
-        # some auxiliary threads we handle
-        if await cursor.get() is None and member.thread_id not in {
-            1311944713355526174,  # food
-            1156264191154475109,  # confessions
-            1202627339515592704,  # archive
-            1173190577257447575,  # code
-            1325871617850609686,  # old demon threads
-            1277673920996180079,
-            1326243164067069955,
-        }:
+        if member.thread_id not in self.allowlister.thread_ids:
             return
 
         if not self.allowlister.is_allowlisted_id(member.id):
@@ -639,20 +634,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
         logger.debug("updated pbvm count", added_count=count)
 
-        cursor = await self.bot.db.execute(
-            "SELECT id FROM thread_name_queue WHERE thread_id = ?",
-            (message.channel.id,),
-        )
-
-        if await cursor.get() is None and message.channel.id not in {
-            1311944713355526174,  # food
-            1156264191154475109,  # confessions
-            1202627339515592704,  # archive
-            1173190577257447575,  # code
-            1325871617850609686,  # old demon threads
-            1277673920996180079,
-            1326243164067069955,
-        }:
+        if message.channel.id not in self.allowlister.thread_ids:
             return
 
         query = "SELECT SUM(count) FROM pbvm_counter WHERE user_id = ?"

@@ -21,6 +21,7 @@ EXTENSIONS = (
     "hoi_minim.cogs.allowlister",
     "hoi_minim.cogs.demons",
     "hoi_minim.cogs.tags",
+    "hoi_minim.cogs.nword_muter",
 )
 
 
