@@ -24,6 +24,8 @@ WORDLIST = {
     "nigger",
     "nіgga",  # noqa: RUF001
     "nіggеr",  # noqa: RUF001
+    "ngga",
+    "ngger",
 }
 
 
@@ -65,7 +67,7 @@ class NwordMuter(commands.Cog):
             message_id=message.id,
             user_id=author.id,
         )
-        getting_muted = self.random.random() < 0.15
+        getting_muted = self.random.random() < 0.12
         can_be_muted = author.top_role < message.guild.me.top_role
 
         if not getting_muted:
@@ -85,6 +87,18 @@ class NwordMuter(commands.Cog):
             await author.timeout(timedelta(hours=1), reason="sorako")
         except (discord.errors.Forbidden, discord.errors.HTTPException) as e:
             logger.exception("could not time out racism", exc_info=e)
+
+        try:
+            dm_channel = author.dm_channel or await author.create_dm()
+
+            await dm_channel.send(
+                content=(
+                    "Bạn đã bị mute do n-word bypass và do xui. Bạn có 12% khả năng bị mute mỗi lần bypass filter.\n"
+                    "You have been muted for bypassing the n-word filter, and for being unlucky. There's only a 12% chance you get muted for doing so."
+                )
+            )
+        except (discord.errors.Forbidden, discord.errors.HTTPException) as e:
+            logger.exception("cannot notify mute", exc_info=e)
 
 
 async def setup(bot: "MinimBot"):
