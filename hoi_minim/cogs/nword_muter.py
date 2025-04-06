@@ -29,6 +29,7 @@ WORDLIST = {
     "n/gget",
     "Ꞃい𝔾𝔾えR",  # noqa: RUF001
     "nıgus",  # noqa: RUF001
+    "Ꞃ𝕚𝔾𝔾Ꭼr",  # noqa: RUF001
 }
 
 
