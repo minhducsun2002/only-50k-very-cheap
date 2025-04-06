@@ -34,6 +34,8 @@ WORDLIST = {
     "nigg3r",
     "n1gg3r",
     "n1993r",
+    "にggあ",
+    "닉가",
 }
 
 
