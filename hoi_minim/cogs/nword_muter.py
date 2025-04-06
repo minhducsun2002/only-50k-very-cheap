@@ -37,6 +37,9 @@ WORDLIST = {
     "にggあ",
     "닉가",
     "Ɲ𝐼𝓘𝓘𝑒ℛ",
+    "nger",
+    "nagger",
+    "nige",
 }
 
 
