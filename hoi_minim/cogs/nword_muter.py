@@ -64,7 +64,7 @@ class NwordMuter(commands.Cog):
 
         author = cast(discord.Member, message.author)
         has_racism = any(
-            forbidden_word.lower() in word.lower()
+            forbidden_word in word.lower()
             for forbidden_word in WORDLIST
             for word in message.content.split()
         )
@@ -83,6 +83,8 @@ class NwordMuter(commands.Cog):
             (message.guild.id, author.id),
         )
         pity: int = (await pity_cursor.get()) or 0
+
+        logger.debug("current pity", user_id=author.id, pity=pity)
         getting_muted = self.random.random() < 0.12 or pity >= 5
         can_be_muted = author.top_role < message.guild.me.top_role
 
@@ -94,7 +96,7 @@ class NwordMuter(commands.Cog):
                 await self.bot.db.execute(
                     """INSERT INTO racism_pity_counter (guild_id, user_id, count)
                     VALUES (?, ?, 1)
-                    ON CONFLICT (guild_id, user_id) DO UPDATE count = count + 1""",
+                    ON CONFLICT (guild_id, user_id) DO UPDATE SET count = count + 1""",
                     (message.guild.id, author.id),
                 )
             return
