@@ -72,6 +72,11 @@ class NwordMuter(commands.Cog):
             return
 
         if not can_be_muted:
+            logger.debug(
+                "user hit SSRacism, but cannot be muted",
+                user_id=author.id,
+                user_top_role=author.top_role.id,
+            )
             return
 
         logger.debug("user hit SSRacism", user_id=author.id)
