@@ -62,9 +62,12 @@ class AllowlisterCog(commands.Cog, name="Allowlister"):
         cursor = await self.bot.db.execute(
             "SELECT thread_id FROM thread_name_queue WHERE thread_id IS NOT NULL AND deleted = FALSE"
         )
-        thread_ids: list[int] = await cursor.get()
+        thread_ids: list[int] | int | None = await cursor.get()
 
-        self.thread_ids.extend(thread_ids)
+        if isinstance(thread_ids, list):
+            self.thread_ids.extend(thread_ids)
+        elif isinstance(thread_ids, int):
+            self.thread_ids.append(thread_ids)
 
     def is_allowlisted_id(self, id: int):
         return id in self.allowlisted_users or id in self.allowlisted_roles
