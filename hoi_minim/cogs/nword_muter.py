@@ -24,6 +24,9 @@ WORDLIST = {
     "nіggеr",  # noqa: RUF001
     "ngga",
     "ngger",
+    "n199er",
+    "n199a",
+    "n/gget",
 }
 
 
@@ -51,7 +54,7 @@ class NwordMuter(commands.Cog):
 
         author = cast(discord.Member, message.author)
         has_racism = any(
-            forbidden_word in word
+            forbidden_word.lower() in word
             for forbidden_word in WORDLIST
             for word in message.content.split()
         )
