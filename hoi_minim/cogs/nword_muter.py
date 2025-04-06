@@ -78,23 +78,37 @@ class NwordMuter(commands.Cog):
             message_id=message.id,
             user_id=author.id,
         )
-        getting_muted = self.random.random() < 0.12
+        pity_cursor = await self.bot.db.execute(
+            "SELECT count FROM racism_pity_counter WHERE guild_id = ? AND user_id = ?",
+            (message.guild.id, author.id),
+        )
+        pity: int = (await pity_cursor.get()) or 0
+        getting_muted = self.random.random() < 0.12 or pity >= 5
         can_be_muted = author.top_role < message.guild.me.top_role
 
-        if not getting_muted:
+        if not can_be_muted:
             return
 
-        if not can_be_muted:
-            logger.debug(
-                "user hit SSRacism, but cannot be muted",
-                user_id=author.id,
-                user_top_role=author.top_role.id,
-            )
+        if not getting_muted:
+            if can_be_muted:
+                await self.bot.db.execute(
+                    """INSERT INTO racism_pity_counter (guild_id, user_id, count)
+                    VALUES (?, ?, 1)
+                    ON CONFLICT (guild_id, user_id) DO UPDATE count = count + 1""",
+                    (message.guild.id, author.id),
+                )
             return
+
+        if pity >= 5:
+            await self.bot.db.execute(
+                "UPDATE racism_pity_counter SET count = 0 WHERE guild_id = ? and user_id = ?",
+                (message.guild.id, author.id),
+            )
 
         logger.debug("user hit SSRacism", user_id=author.id)
 
         try:
+            await message.delete()
             await author.timeout(timedelta(hours=1), reason="sorako")
         except (discord.errors.Forbidden, discord.errors.HTTPException) as e:
             logger.exception("could not time out racism", exc_info=e)
