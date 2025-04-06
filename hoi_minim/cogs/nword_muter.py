@@ -85,7 +85,7 @@ class NwordMuter(commands.Cog):
         pity: int = (await pity_cursor.get()) or 0
 
         logger.debug("current pity", user_id=author.id, pity=pity)
-        getting_muted = self.random.random() < 0.12 or pity >= 5
+        getting_muted = self.random.random() < 0.12 or pity >= 7
         can_be_muted = author.top_role < message.guild.me.top_role
 
         if not can_be_muted:
@@ -101,11 +101,10 @@ class NwordMuter(commands.Cog):
                 )
             return
 
-        if pity >= 5:
-            await self.bot.db.execute(
-                "UPDATE racism_pity_counter SET count = 0 WHERE guild_id = ? and user_id = ?",
-                (message.guild.id, author.id),
-            )
+        await self.bot.db.execute(
+            "UPDATE racism_pity_counter SET count = 0 WHERE guild_id = ? and user_id = ?",
+            (message.guild.id, author.id),
+        )
 
         logger.debug("user hit SSRacism", user_id=author.id)
 
