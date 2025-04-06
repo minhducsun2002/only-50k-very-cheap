@@ -30,6 +30,10 @@ WORDLIST = {
     "Ꞃい𝔾𝔾えR",  # noqa: RUF001
     "nıgus",  # noqa: RUF001
     "Ꞃ𝕚𝔾𝔾Ꭼr",  # noqa: RUF001
+    "ɴɪɢɢᴇʀ",
+    "nigg3r",
+    "n1gg3r",
+    "n1993r",
 }
 
 
