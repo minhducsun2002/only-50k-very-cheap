@@ -70,6 +70,8 @@ class NwordMuter(commands.Cog):
         if not getting_muted:
             return
 
+        logger.debug("user hit SSRacism", user_id=author.id)
+
         with contextlib.suppress(
             discord.errors.Forbidden, discord.errors.HTTPException
         ):
