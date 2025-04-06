@@ -59,6 +59,12 @@ class NwordMuter(commands.Cog):
         if not has_racism:
             return
 
+        logger.debug(
+            "detected racism",
+            channel_id=message.channel.id,
+            message_id=message.id,
+            user_id=author.id,
+        )
         getting_muted = self.random.random() < 0.2
 
         if not getting_muted:
