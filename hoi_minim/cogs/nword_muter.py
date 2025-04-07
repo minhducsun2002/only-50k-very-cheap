@@ -43,6 +43,7 @@ WORDLIST = {
     "nige",
     "ligger",
     "ligga",
+    "gigger",
 }
 
 
