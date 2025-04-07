@@ -74,9 +74,9 @@ class NwordMuter(commands.Cog):
 
         author = cast(discord.Member, message.author)
         has_racism = any(
-            forbidden_word in word.lower()
+            word not in ("nigga", "nigger") and forbidden_word in word
             for forbidden_word in WORDLIST
-            for word in message.content.split()
+            for word in message.content.lower().split()
         )
 
         if not has_racism:
