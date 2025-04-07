@@ -44,6 +44,7 @@ WORDLIST = {
     "ligger",
     "ligga",
     "gigger",
+    "negus",
 }
 
 
