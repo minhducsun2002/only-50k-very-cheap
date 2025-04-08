@@ -131,7 +131,7 @@ class NwordMuter(commands.Cog):
             "SELECT count FROM racism_pity_counter WHERE guild_id = ? AND user_id = ?",
             (message.guild.id, author.id),
         )
-        max_pity = self.bot.mute_pity
+        max_pity = self.mute_pity
         pity: int = (await pity_cursor.get()) or 0
         rand_number = self.random.random()
         logger.debug("current pity", user_id=author.id, pity=pity)
