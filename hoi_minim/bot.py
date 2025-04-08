@@ -47,7 +47,6 @@ class MinimBot(Bot):
 
         super().__init__(command_prefix=command_prefix, intents=intents)
 
-        self.mute_pity: int = 7
         self.db: async_apsw.Connection = MISSING
         self.bot_app_info: discord.AppInfo = MISSING
 

@@ -1,11 +1,11 @@
-import contextlib
 import random
 from datetime import timedelta
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
 import discord
 import structlog
 from discord.ext import commands
+from discord.ext.commands import Context
 
 if TYPE_CHECKING:
     from hoi_minim.bot import MinimBot
@@ -56,6 +56,46 @@ class NwordMuter(commands.Cog):
 
         self.random = random.Random()
         self.random.seed()
+
+        self.mute_pity: int = 7
+
+    @override
+    async def cog_load(self) -> None:
+        cursor = await self.bot.db.execute(
+            "SELECT value FROM bot_config WHERE key = 'racism-max-pity'"
+        )
+        pity = await cursor.get()
+
+        if pity is not None:
+            self.mute_pity = int(pity)
+
+    @commands.command("max_pity")
+    @commands.is_owner()
+    async def set_max_pity(self, ctx: Context, max_pity: int | None = None):
+        if max_pity is None:
+            cursor = await self.bot.db.execute(
+                "SELECT value FROM bot_config WHERE key = 'racism-max-pity'"
+            )
+            pity = await cursor.get()
+            pity = int(pity) if pity is not None else 7
+
+            await ctx.reply(
+                content=f"Current mute pity is {pity}.", mention_author=False
+            )
+            return
+
+        self.mute_pity = max_pity
+
+        await self.bot.db.execute(
+            "INSERT INTO bot_config(key, value) VALUES ('racism-max-pity', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+            (max_pity,),
+        )
+
+        await ctx.reply(
+            f"Set max pity to {max_pity} times.",
+            mention_author=False,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -119,7 +159,7 @@ class NwordMuter(commands.Cog):
 
         if getting_hard_muted:
             logger.debug("user hit URacism", user_id=author.id)
-        else: 
+        else:
             logger.debug("user hit SSRacism", user_id=author.id)
 
         try:
