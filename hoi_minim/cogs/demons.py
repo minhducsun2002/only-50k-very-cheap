@@ -308,6 +308,18 @@ class DemonsCog(commands.Cog, name="Demons"):
 
             await ctx.reply(file=discord_file, mention_author=False)
 
+    @commands.command("max_pity")
+    @commands.is_owner()
+    async def max_pity(
+        self, ctx: Context, max_pity: Annotated[int, commands.Range[0, 100]]
+    ):
+            self.bot.mute_pity = max_pity
+            await ctx.reply(
+                f"Set max pity to {max_pity} times.",
+                mention_author=False,
+                allowed_mentions=discord.AllowedMentions.none(),
+    )
+
     @commands.command("capology")
     async def cimpher_apology(
         self,

@@ -91,10 +91,12 @@ class NwordMuter(commands.Cog):
             "SELECT count FROM racism_pity_counter WHERE guild_id = ? AND user_id = ?",
             (message.guild.id, author.id),
         )
+        max_pity = self.bot.mute_pity
         pity: int = (await pity_cursor.get()) or 0
-
+        rand_number = self.random.random()
         logger.debug("current pity", user_id=author.id, pity=pity)
-        getting_muted = self.random.random() < 0.12 or pity >= 7
+        getting_hard_muted = rand_number < 0.001
+        getting_muted = rand_number < 0.12 or pity >= max_pity
         can_be_muted = author.top_role < message.guild.me.top_role
 
         if not can_be_muted:
@@ -115,22 +117,34 @@ class NwordMuter(commands.Cog):
             (message.guild.id, author.id),
         )
 
-        logger.debug("user hit SSRacism", user_id=author.id)
+        if getting_hard_muted:
+            logger.debug("user hit URacism", user_id=author.id)
+        else: 
+            logger.debug("user hit SSRacism", user_id=author.id)
 
         try:
             await message.delete()
-            await author.timeout(timedelta(hours=1), reason="sorako")
+            if getting_hard_muted:
+                await author.timeout(timedelta(days=7), reason="sorako")
+            else:
+                await author.timeout(timedelta(hours=1), reason="sorako")
         except (discord.errors.Forbidden, discord.errors.HTTPException) as e:
             logger.exception("could not time out racism", exc_info=e)
 
         try:
             dm_channel = author.dm_channel or await author.create_dm()
-
-            if pity >= 7:
+            if getting_hard_muted:
                 await dm_channel.send(
                     content=(
-                        "Bạn đã bị mute do n-word bypass và do đạt ngưỡng pity. Bạn có tối đa 7 lượt bypass filter trước khi bị mute.\n"
-                        "You have been muted for bypassing the n-word filter, and reaching pity. You can bypass the filter 7 times at max before getting muted."
+                        "Bạn đã bị mute do bypass n-word filter. Bạn rất tốt nhưng tôi rất tiếc, vì đầu cu hậu quả hiếm khi được bôi trơn.\n"
+                        "You have been muted for bypassing the n-word filter. Unfortunately for you the dildo of consequences rarely comes lubed."
+                    )
+                )
+            elif pity >= max_pity:
+                await dm_channel.send(
+                    content=(
+                        f"Bạn đã bị mute do n-word bypass và do đạt ngưỡng pity. Bạn có tối đa {max_pity} lượt bypass filter trước khi bị mute.\n"
+                        f"You have been muted for bypassing the n-word filter, and reaching pity. You can bypass the filter {max_pity} times at max before getting muted."
                     )
                 )
             else:
