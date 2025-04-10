@@ -46,6 +46,7 @@ WORDLIST = {
     "igga",
     "igger",
     "nigget",
+    "nugger",
 }
 
 
