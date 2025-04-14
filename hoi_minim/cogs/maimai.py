@@ -40,7 +40,7 @@ RE_JUDGEMENT_DETAILS = re.compile(
     r"TOUCH:\s+(?P<touch_pcrit>\d+)?\s+(?P<touch_perfect>\d+)?\s+(?P<touch_great>\d+)?\s+(?P<touch_good>\d+)?\s+(?P<touch_miss>\d+)?\n"
     r"BREAK:\s+(?P<break_pcrit>\d+)?\s+(?P<break_perfect>\d+)?\s+(?P<break_great>\d+)?\s+(?P<break_good>\d+)?\s+(?P<break_miss>\d+)?"
 )
-RE_ACHIEVEMENT = re.compile(r"Accuracy: **([\d\.]+)%**")
+RE_ACHIEVEMENT = re.compile(r"Accuracy: \*\*([\d\.]+)%\*\*")
 
 
 @dataclass
