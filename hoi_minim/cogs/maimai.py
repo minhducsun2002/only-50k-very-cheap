@@ -344,3 +344,7 @@ class MaimaiCog(commands.Cog, name="Maimai"):
             "```"
         )
         await ctx.reply(content=content, mention_author=False)
+
+
+async def setup(bot: "MinimBot"):
+    await bot.add_cog(MaimaiCog(bot))
