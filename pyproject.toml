@@ -19,6 +19,7 @@ dependencies = [
     "typst>=0.13.2",
     "anyio>=4.9.0",
     "tzdata>=2025.2; sys_platform == 'win32'",
+    "z3-solver>=4.14.1.0",
 ]
 
 [dependency-groups]
