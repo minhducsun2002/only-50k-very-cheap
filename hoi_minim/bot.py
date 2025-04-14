@@ -22,6 +22,7 @@ EXTENSIONS = (
     "hoi_minim.cogs.demons",
     "hoi_minim.cogs.tags",
     "hoi_minim.cogs.nword_muter",
+    "hoi_minim.cogs.maimai",
 )
 
 
