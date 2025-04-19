@@ -48,6 +48,8 @@ WORDLIST = {
     "nigget",
     "nugger",
     "nickgur",
+    "gga",
+    "gger",
 }
 
 
