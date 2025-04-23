@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 import io
 from typing import TYPE_CHECKING, Annotated, cast, override
 
@@ -108,7 +109,7 @@ class TagsCog(commands.Cog, name="Tags"):
     @commands.group(name="tag", invoke_without_command=True)
     async def tag(self, ctx: Context, *, name: Annotated[str, TagName(lower=True)]):
         query = """
-        SELECT tags.content
+        SELECT tags.id, tags.content
         FROM tag_lookup
         LEFT JOIN tags ON tags.id = tag_lookup.tag_id
         WHERE tag_lookup.guild_id = ? AND LOWER(tag_lookup.name) = ?
@@ -127,7 +128,7 @@ class TagsCog(commands.Cog, name="Tags"):
             raise RuntimeError(msg)
 
         cursor = await self.bot.db.execute(query, (ctx.guild.id, name))
-        row: tuple[str] | None = await cursor.fetchone()
+        row: tuple[int, str] | None = await cursor.fetchone()
 
         if row is None:
             cursor = await self.bot.db.execute(search_query, (name, ctx.guild.id))
@@ -145,7 +146,12 @@ class TagsCog(commands.Cog, name="Tags"):
             )
             return
 
-        await ctx.reply(content=row[0], mention_author=False)
+        await ctx.reply(content=row[1], mention_author=False)
+
+        update_uses_query = """
+        UPDATE tags SET uses = uses + 1 WHERE id = ?
+        """
+        await self.bot.db.execute(update_uses_query, (row[0],))
 
     @commands.guild_only()
     @tag.command(name="create", aliases=["add"])
@@ -282,7 +288,7 @@ class TagsCog(commands.Cog, name="Tags"):
         WHERE LOWER(name) = ? AND owner_id = ? AND guild_id = ?
         """
         query_update = """
-        UPDATE tags SET content = ? WHERE id = ?
+        UPDATE tags SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
         """
 
         if ctx.guild is None:
@@ -410,6 +416,87 @@ class TagsCog(commands.Cog, name="Tags"):
             ctx, TagPageSource(self.bot.db, ctx.guild.id, per_page=10)
         )
         await view.start()
+
+    @commands.guild_only()
+    @tag.command(name="info")
+    async def tag_info(
+        self, ctx: Context, *, name: Annotated[str, TagName(lower=True)]
+    ):
+        if ctx.guild is None:
+            msg = "ctx.guild is None in guild only command"
+            raise RuntimeError(msg)
+
+        query = """
+        SELECT
+            tag_lookup.name <> tags.name AS "is_alias",
+            tag_lookup.name AS lookup_name,
+            tag_lookup.created_at AS lookup_created_at,
+            tag_lookup.owner_id AS lookup_owner_id,
+            tags.name,
+            tags.owner_id,
+            tags.created_at,
+            tags.updated_at,
+            tags.uses
+        FROM tag_lookup
+        LEFT JOIN tags ON tags.id = tag_lookup.tag_id
+        WHERE tag_lookup.guild_id = ? AND LOWER(tag_lookup.name) = ?
+        """
+
+        cursor = await self.bot.db.execute(query, (ctx.guild.id, name))
+        row: (
+            tuple[bool, str, str, int, str, int, str, str, int] | None
+        ) = await cursor.get()
+
+        if row is None:
+            await ctx.reply(content="Tag not found.", mention_author=False)
+            return
+
+        (
+            is_alias,
+            lookup_name,
+            lookup_created_at,
+            lookup_owner_id,
+            name,
+            owner_id,
+            created_at,
+            updated_at,
+            uses,
+        ) = row
+
+        if is_alias:
+            embed = discord.Embed(
+                color=discord.Color.yellow(),
+                title=lookup_name,
+                timestamp=datetime.fromisoformat(lookup_created_at).replace(tzinfo=UTC),
+            )
+
+            user = self.bot.get_user(lookup_owner_id) or (
+                await self.bot.fetch_user(lookup_owner_id)
+            )
+            embed.set_author(name=str(user), icon_url=user.display_avatar.url)
+
+            embed.add_field(name="Owner", value=f"<@{owner_id}>")
+            embed.add_field(name="Original", value=name)
+        else:
+            embed = discord.Embed(
+                color=discord.Color.yellow(),
+                title=name,
+                timestamp=datetime.fromisoformat(created_at).replace(tzinfo=UTC),
+            )
+
+            user = self.bot.get_user(owner_id) or (await self.bot.fetch_user(owner_id))
+            embed.set_author(name=str(user), icon_url=user.display_avatar.url)
+
+            embed.add_field(name="Owner", value=f"<@{owner_id}>")
+            embed.add_field(name="Uses", value=str(uses))
+
+            if updated_at != created_at:
+                updated_timestamp = int(
+                    datetime.fromisoformat(updated_at).replace(tzinfo=UTC).timestamp()
+                )
+                embed.add_field(name="Last edited", value=f"<t:{updated_timestamp}:R>")
+
+        await ctx.reply(embed=embed, mention_author=False)
 
 
 async def setup(bot: "MinimBot"):
