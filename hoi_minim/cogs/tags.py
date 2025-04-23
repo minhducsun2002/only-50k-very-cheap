@@ -1,5 +1,5 @@
-from datetime import UTC, datetime
 import io
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Annotated, cast, override
 
 import apsw
@@ -497,6 +497,32 @@ class TagsCog(commands.Cog, name="Tags"):
                 embed.add_field(name="Last edited", value=f"<t:{updated_timestamp}:R>")
 
         await ctx.reply(embed=embed, mention_author=False)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if not self.allowlister.is_allowlisted_id(message.author.id):
+            return
+
+        if message.author.bot:
+            return
+
+        if message.webhook_id:
+            return
+
+        if not message.guild:
+            return
+
+        if not message.content.startswith(("... ", "… ")):
+            return
+
+        fake_command = (
+            f"{self.bot.user.mention} tag "
+            + message.content.removeprefix("... ").removeprefix("… ").lower()
+        )
+        message.content = fake_command
+        ctx = await self.bot.get_context(message)
+
+        await self.bot.invoke(ctx)
 
 
 async def setup(bot: "MinimBot"):
