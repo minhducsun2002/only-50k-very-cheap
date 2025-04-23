@@ -50,6 +50,10 @@ WORDLIST = {
     "nickgur",
     "gga",
     "gger",
+    "nigg",
+    "nigg@",
+    "n!gg",
+    "n-gg",
 }
 
 
