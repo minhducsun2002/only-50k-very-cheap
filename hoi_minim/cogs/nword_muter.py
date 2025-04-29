@@ -54,6 +54,8 @@ WORDLIST = {
     "nigg@",
     "n!gg",
     "n-gg",
+    "nɪgga",
+    "nɪgger",
 }
 ALLOWLISTED_WORDS = {
     "nigga",
