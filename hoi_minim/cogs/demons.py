@@ -52,6 +52,7 @@ PBVM_WORDS = [
     "ba sáu",
     "ba sau",
     ":qn:",
+    ":thanhhoa:",
     "hai ngón",
     "hai ngon",
     "rau má",
