@@ -500,7 +500,10 @@ class TagsCog(commands.Cog, name="Tags"):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if not self.allowlister.is_allowlisted_id(message.author.id):
+        if (
+            not self.allowlister.is_allowlisted_id(message.author.id)
+            or message.channel.id not in self.allowlister.thread_ids
+        ):
             return
 
         if message.author.bot:
@@ -512,13 +515,21 @@ class TagsCog(commands.Cog, name="Tags"):
         if not message.guild:
             return
 
-        if not message.content.startswith(("... ", "… ")):
+        if message.content.startswith("... "):
+            fake_command = (
+                f"{self.bot.user.mention} tag {message.content.removeprefix('... ')}"
+            )
+        elif message.content.startswith("… "):
+            fake_command = (
+                f"{self.bot.user.mention} tag {message.content.removeprefix('… ')}"
+            )
+        elif message.content.startswith(".. "):
+            fake_command = (
+                f"{self.bot.user.mention} tag add {message.content.removeprefix('.. ')}"
+            )
+        else:
             return
 
-        fake_command = (
-            f"{self.bot.user.mention} tag "
-            + message.content.removeprefix("... ").removeprefix("… ").lower()
-        )
         message.content = fake_command
         ctx = await self.bot.get_context(message)
 
