@@ -65,6 +65,7 @@ PBVM_WORDS = [
     "ca ro phi",
     "rau muống",
     "rau muong",
+    "𝟑𝟔",
 ]
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
