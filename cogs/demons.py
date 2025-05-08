@@ -372,7 +372,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
                 (id, thread_name, _, _, _, _) = row
 
         thread = await nsfw_channel.create_thread(
-            name=f"[Hội Nghĩa] {thread_name}",
+            name=f"[Hội Thanh Hóa] {thread_name}",
             type=discord.ChannelType.private_thread,
             invitable=True,
         )
