@@ -443,15 +443,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
             if datetime.now(UTC) - created_at >= timedelta(days=2):
                 thread = self.bot.get_channel(thread_id)
 
-                if not isinstance(thread, discord.Thread):
-                    logger.error(
-                        "received non-thread channel in database",
-                        id=id,
-                        thread_id=thread_id,
-                    )
-                    continue
-
-                if thread is not None:
+                if isinstance(thread, discord.Thread):
                     if on_expiry == "KICK_EVERYONE_AND_ARCHIVE":
                         await thread.edit(archived=True, locked=True)
 
