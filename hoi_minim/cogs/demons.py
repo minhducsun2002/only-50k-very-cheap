@@ -12,7 +12,6 @@ import typst
 from aiohttp import web
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
-from discord.http import Route
 from discord.utils import _from_json, escape_markdown
 
 from hoi_minim.lib import async_apsw
@@ -265,11 +264,7 @@ class DemonsCog(commands.Cog, name="Demons"):
 
         new_invitable = not ctx.channel.invitable if enabled is None else enabled
 
-        await self.bot.http.request(
-            Route("PATCH", "/channels/{thread_id}", thread_id=ctx.channel.id),
-            json={"invitable": new_invitable},
-        )
-
+        await ctx.channel.edit(invitable=new_invitable)
         await ctx.reply(f'Set "Anyone can invite" to {new_invitable} for this thread.')
 
     @commands.command(name="termination")
@@ -433,21 +428,39 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
     async def _cleanup_old_threads(self):
         cursor = await self.bot.db.execute(
-            "SELECT id, thread_id, created FROM thread_name_queue WHERE thread_id IS NOT NULL and deleted = FALSE"
+            "SELECT id, thread_id, created, on_expiry FROM thread_name_queue WHERE thread_id IS NOT NULL and deleted = FALSE"
         )
-        existing_channels = cast(list[tuple[int, int, str]], await cursor.fetchall())
+        existing_channels = cast(
+            list[tuple[int, int, str, str]], await cursor.fetchall()
+        )
 
-        for channel in existing_channels:
-            (id, thread_id, created_at) = channel
+        for thread in existing_channels:
+            (id, thread_id, created_at, on_expiry) = thread
             created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S").replace(
                 tzinfo=UTC
             )
 
             if datetime.now(UTC) - created_at >= timedelta(days=2):
-                channel = self.bot.get_channel(thread_id)
+                thread = self.bot.get_channel(thread_id)
 
-                if channel is not None:
-                    await channel.delete()
+                if not isinstance(thread, discord.Thread):
+                    logger.error(
+                        "received non-thread channel in database",
+                        id=id,
+                        thread_id=thread_id,
+                    )
+                    continue
+
+                if thread is not None:
+                    if on_expiry == "KICK_EVERYONE_AND_ARCHIVE":
+                        await thread.edit(archived=True, locked=True)
+
+                        members = await thread.fetch_members()
+
+                        for member in members:
+                            await thread.remove_user(member)
+                    else:
+                        await thread.delete()
 
                 await self.bot.db.execute(
                     "UPDATE thread_name_queue SET deleted = TRUE WHERE id = ?", (id,)
@@ -505,10 +518,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         await thread.send(self.allowlister.get_allowlisted_mentions())
 
         await logger.ainfo("disabling thread invites")
-        await self.bot.http.request(
-            Route("PATCH", "/channels/{thread_id}", thread_id=thread.id),
-            json={"invitable": False},
-        )
+        await thread.edit(invitable=False)
 
         await logger.ainfo("marking thread as created")
 

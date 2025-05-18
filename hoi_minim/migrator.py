@@ -55,7 +55,7 @@ class Migrator:
 
     def upgrade(self, connection: apsw.Connection):
         current_version: int = connection.pragma("user_version")
-        successes: int = 0
+        next_version = current_version
 
         with connection:
             for revision in self.ordered_revisions:
@@ -69,9 +69,9 @@ class Migrator:
                 )
 
                 _ = connection.execute(revision.file.read_text(encoding="utf-8"))
-                successes += 1
+                next_version = revision.version
 
-        self.stamp(connection, current_version + successes)
+        self.stamp(connection, next_version)
 
     def stamp(self, connection: apsw.Connection, version: int):
         connection.pragma("user_version", version)
