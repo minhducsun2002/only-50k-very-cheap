@@ -444,15 +444,15 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
                 thread = self.bot.get_channel(thread_id)
 
                 if isinstance(thread, discord.Thread):
-                    if on_expiry == "KICK_EVERYONE_AND_ARCHIVE":
+                    if on_expiry == "DELETE":
+                        await thread.delete()
+                    else:
                         await thread.edit(archived=True, locked=True)
 
                         members = await thread.fetch_members()
 
                         for member in members:
                             await thread.remove_user(member)
-                    else:
-                        await thread.delete()
 
                 await self.bot.db.execute(
                     "UPDATE thread_name_queue SET deleted = TRUE WHERE id = ?", (id,)
