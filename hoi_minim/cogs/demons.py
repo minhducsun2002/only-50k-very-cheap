@@ -499,7 +499,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
         await logger.ainfo("creating thread", id=id, thread_name=thread_name)
         thread = await nsfw_channel.create_thread(
-            name=f"[Hội Sorako] {thread_name}",
+            name=f"[Hội trồng cây] {thread_name}",
             type=discord.ChannelType.private_thread,
             invitable=True,
         )
